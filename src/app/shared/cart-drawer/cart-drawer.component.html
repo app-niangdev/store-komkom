@@ -1,0 +1,102 @@
+@if (cart.isOpen()) {
+  <div class="backdrop" (click)="close()" aria-hidden="true"></div>
+}
+<aside
+  #panel
+  class="drawer"
+  [class.is-open]="cart.isOpen()"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="cart-title"
+  tabindex="-1"
+  [attr.aria-hidden]="!cart.isOpen()"
+  [attr.inert]="cart.isOpen() ? null : ''"
+>
+  <header class="drawer__head">
+    <div>
+      <h2 id="cart-title">Mon panier</h2>
+      <p>{{ cart.count() }} article{{ cart.count() > 1 ? 's' : '' }}</p>
+    </div>
+    <button type="button" class="icon-btn" (click)="close()" aria-label="Fermer le panier"><i class="bi bi-x-lg"></i></button>
+  </header>
+
+  @if (cart.items().length === 0) {
+    <div class="empty">
+      <span class="empty__icon"><i class="bi bi-bag"></i></span>
+      <h3>Votre panier est vide</h3>
+      <p>Ajoutez des produits puis envoyez votre commande à la boutique sur WhatsApp.</p>
+      <a class="btn btn--brand" [routerLink]="['/', store().slug]" (click)="close()">Voir les produits</a>
+    </div>
+  } @else if (sent()) {
+    <div class="empty">
+      <span class="empty__icon empty__icon--wa"><i class="bi bi-whatsapp"></i></span>
+      <h3>Commande prête dans WhatsApp</h3>
+      <p>Envoyez le message dans la conversation ouverte : {{ store().name }} vous confirmera la disponibilité et le prix.</p>
+      <button type="button" class="btn btn--brand" (click)="clearAfterOrder()">C'est envoyé, vider le panier</button>
+      <button type="button" class="btn btn--ghost" (click)="sent.set(false)">Revenir au panier</button>
+    </div>
+  } @else {
+    <div class="drawer__scroll">
+    <ul class="items">
+      @for (item of cart.items(); track item.key) {
+        <li class="item">
+          <a class="item__media" [routerLink]="['/', store().slug, 'produit', item.productId]" (click)="close()" tabindex="-1">
+            @if (item.image) {
+              <img [src]="item.image" [alt]="item.name" loading="lazy" />
+            } @else {
+              <span>{{ initials(item.name) }}</span>
+            }
+          </a>
+          <div class="item__body">
+            <a class="item__name" [routerLink]="['/', store().slug, 'produit', item.productId]" (click)="close()">{{ item.name }}</a>
+            <span class="item__unit">
+              {{ item.price !== null ? money(item.price) : 'Prix à confirmer' }} / {{ item.unitName }}
+            </span>
+            <div class="item__row">
+              <div class="stepper" role="group" [attr.aria-label]="'Quantité de ' + item.name">
+                <button type="button" (click)="cart.setQuantity(item.key, item.quantity - 1)" [attr.aria-label]="item.quantity === 1 ? 'Retirer' : 'Diminuer'">
+                  <i class="bi" [class.bi-dash]="item.quantity > 1" [class.bi-trash3]="item.quantity === 1"></i>
+                </button>
+                <output>{{ item.quantity }}</output>
+                <button type="button" (click)="cart.setQuantity(item.key, item.quantity + 1)" aria-label="Augmenter"><i class="bi bi-plus"></i></button>
+              </div>
+              <strong class="item__total">{{ item.price !== null ? money(item.price * item.quantity) : '—' }}</strong>
+            </div>
+          </div>
+        </li>
+      }
+    </ul>
+
+      <div class="fields">
+        <div>
+          <label class="label" for="cart-name">Votre nom <span class="optional">(facultatif)</span></label>
+          <input id="cart-name" class="input" [(ngModel)]="name" name="name" autocomplete="name" maxlength="80" placeholder="Ex. Awa Diop" />
+        </div>
+        <div>
+          <label class="label" for="cart-note">Précisions <span class="optional">(facultatif)</span></label>
+          <textarea id="cart-note" class="input" [(ngModel)]="note" name="note" maxlength="300" rows="2" placeholder="Livraison, couleur, heure de passage…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="checkout">
+
+      <div class="checkout__total">
+        <span>Total indicatif</span>
+        <strong>{{ money(cart.total()) }}</strong>
+      </div>
+      @if (cart.hasUnpriced()) {
+        <p class="checkout__hint"><i class="bi bi-info-circle"></i> Certains prix seront confirmés par la boutique.</p>
+      }
+
+      @if (orderLink; as link) {
+        <a class="btn btn--whatsapp btn--lg btn--block" [href]="link" target="_blank" rel="noopener" (click)="onOrder()">
+          <i class="bi bi-whatsapp"></i> Commander sur WhatsApp
+        </a>
+      } @else {
+        <p class="checkout__hint">Cette boutique ne reçoit pas encore de commandes WhatsApp.</p>
+      }
+      <p class="checkout__legal">Aucun paiement en ligne : la boutique confirme votre commande sur WhatsApp.</p>
+    </div>
+  }
+</aside>

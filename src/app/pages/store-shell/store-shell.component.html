@@ -1,0 +1,131 @@
+@if (store(); as store) {
+  <div class="progress" [class.is-active]="navigating()" aria-hidden="true"></div>
+  <header class="topbar" [class.is-scrolled]="scrolled()">
+    <div class="container topbar__inner">
+      <a class="brand" [routerLink]="['/', store.slug]" [attr.aria-label]="'Accueil ' + store.name">
+        <app-store-logo [url]="store.logo_url" [name]="store.name" />
+        <span class="brand__text">
+          <strong>{{ store.name }}</strong>
+          @if (store.slogan) {
+            <small>{{ store.slogan }}</small>
+          }
+        </span>
+      </a>
+
+      <nav class="topbar__actions" aria-label="Actions">
+        @if (whatsappContact) {
+          <a class="icon-btn topbar__wa" [href]="whatsappContact" target="_blank" rel="noopener" title="Écrire sur WhatsApp" aria-label="Écrire à la boutique sur WhatsApp">
+            <i class="bi bi-whatsapp"></i>
+          </a>
+        }
+        <button type="button" class="cart-btn" [class.is-bump]="bump()" (click)="cart.isOpen.set(true)" [attr.aria-label]="'Ouvrir le panier, ' + cart.count() + ' article(s)'">
+          <i class="bi bi-bag"></i>
+          <span class="cart-btn__label">Panier</span>
+          @if (cart.count() > 0) {
+            <span class="cart-btn__count">{{ cart.count() }}</span>
+          }
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <router-outlet />
+  </main>
+
+  <!-- Nous rendre visite -->
+  <section class="container visit" aria-labelledby="visit-title">
+    <div class="visit__card">
+      <div class="visit__text">
+        <h2 id="visit-title">Une question avant de commander ?</h2>
+        <p>{{ store.name }} vous répond directement sur WhatsApp ou par téléphone{{ store.address ? ', et vous accueille à ' + store.address : '' }}.</p>
+      </div>
+      <div class="visit__actions">
+        @if (whatsappContact) {
+          <a class="btn btn--whatsapp btn--lg" [href]="whatsappContact" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Écrire sur WhatsApp</a>
+        }
+        @if (store.phones.length) {
+          <a class="btn btn--ghost btn--lg" [href]="'tel:' + store.phones[0]"><i class="bi bi-telephone"></i> {{ formatPhone(store.phones[0]) }}</a>
+        }
+        @if (mapsUrl) {
+          <a class="btn btn--ghost btn--lg" [href]="mapsUrl" target="_blank" rel="noopener"><i class="bi bi-geo-alt"></i> Itinéraire</a>
+        }
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container footer__grid">
+      <div class="footer__brand">
+        <app-store-logo [url]="store.logo_url" [name]="store.name" />
+        <div>
+          <strong>{{ store.name }}</strong>
+          <p>{{ store.slogan || 'Découvrez nos produits disponibles et commandez en quelques secondes sur WhatsApp.' }}</p>
+        </div>
+      </div>
+
+      <div class="footer__col">
+        <h2>Nous contacter</h2>
+        <ul>
+          @for (phone of store.phones; track phone) {
+            <li><a [href]="'tel:' + phone"><i class="bi bi-telephone"></i> {{ formatPhone(phone) }}</a></li>
+          }
+          @if (whatsappContact) {
+            <li><a [href]="whatsappContact" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> WhatsApp</a></li>
+          }
+          @if (store.email) {
+            <li><a [href]="'mailto:' + store.email"><i class="bi bi-envelope"></i> {{ store.email }}</a></li>
+          }
+        </ul>
+      </div>
+
+      @if (store.address) {
+        <div class="footer__col">
+          <h2>Nous trouver</h2>
+          <ul>
+            <li>
+              <a [href]="mapsUrl" target="_blank" rel="noopener"><i class="bi bi-geo-alt"></i> {{ store.address }}</a>
+            </li>
+          </ul>
+        </div>
+      }
+    </div>
+    <div class="container footer__bottom">
+      <span>© {{ year }} {{ store.company || store.name }}</span>
+      <span>Prix indicatifs, confirmés par la boutique à la commande.</span>
+    </div>
+  </footer>
+
+  <!-- Barre panier (mobile) -->
+  @if (cart.count() > 0 && !cart.isOpen() && !ui.hideCartBar()) {
+    <button type="button" class="cart-bar" (click)="cart.isOpen.set(true)">
+      <span class="cart-bar__count">{{ cart.count() }}</span>
+      <span class="cart-bar__label">Voir mon panier</span>
+      <strong>{{ money(cart.total()) }}</strong>
+    </button>
+  }
+
+  <!-- WhatsApp flottant (quand le panier est vide) -->
+  @if (cart.count() === 0 && whatsappContact) {
+    <a class="wa-fab" [href]="whatsappContact" target="_blank" rel="noopener" aria-label="Écrire à la boutique sur WhatsApp">
+      <i class="bi bi-whatsapp"></i>
+    </a>
+  }
+
+  <!-- Confirmation d'ajout -->
+  @if (ui.toast(); as toast) {
+    <div class="toast" role="status" aria-live="polite">
+      @if (toast.image) {
+        <img [src]="toast.image" alt="" />
+      } @else {
+        <span class="toast__icon"><i class="bi bi-bag-check-fill"></i></span>
+      }
+      <span class="toast__text">{{ toast.text }}</span>
+      <button type="button" (click)="openCartFromToast()">Voir le panier</button>
+    </div>
+  }
+
+  <app-cart-drawer [store]="store" />
+} @else {
+  <app-not-found kind="store" />
+}

@@ -1,0 +1,203 @@
+<!-- Présentation de la boutique -->
+<section class="hero">
+  <div class="hero__pattern" aria-hidden="true"></div>
+  <div class="container hero__inner">
+    <div class="hero__main">
+      <div class="hero__identity">
+        <app-store-logo class="hero__logo" [url]="store().logo_url" [name]="store().name" />
+        <div class="hero__titles">
+          @if (store().company && store().company !== store().name) {
+            <p class="hero__eyebrow">{{ store().company }}</p>
+          }
+          <h1>{{ store().name }}</h1>
+        </div>
+      </div>
+      <p class="hero__slogan">{{ store().slogan || 'Découvrez nos produits disponibles et commandez en quelques secondes sur WhatsApp.' }}</p>
+
+      <ul class="hero__facts">
+        <li><i class="bi bi-box-seam"></i> {{ store().products_count }} produit{{ store().products_count > 1 ? 's' : '' }} en stock</li>
+        @if (store().address) {
+          <li><i class="bi bi-geo-alt"></i> {{ store().address }}</li>
+        }
+      </ul>
+
+      <div class="hero__cta">
+        <a class="btn btn--hero" [routerLink]="[]" queryParamsHandling="preserve" fragment="catalogue"><i class="bi bi-grid-3x3-gap"></i> Voir les produits</a>
+        @if (store().phones.length) {
+          <a class="btn btn--hero-ghost" [href]="'tel:' + store().phones[0]"><i class="bi bi-telephone"></i> Appeler</a>
+        }
+      </div>
+    </div>
+
+    <!-- Carte « commander » (bureau) -->
+    <aside class="order-card" aria-label="Comment commander">
+      <h2>Commander, c'est simple</h2>
+      <ol>
+        <li><span><i class="bi bi-search"></i></span><div><strong>Choisissez</strong><small>Parcourez les produits en stock</small></div></li>
+        <li><span><i class="bi bi-bag-plus"></i></span><div><strong>Ajoutez au panier</strong><small>Ajustez les quantités</small></div></li>
+        <li><span class="is-wa"><i class="bi bi-whatsapp"></i></span><div><strong>Envoyez sur WhatsApp</strong><small>La boutique confirme prix et livraison</small></div></li>
+      </ol>
+      @if (whatsappContact) {
+        <a class="btn btn--whatsapp btn--block" [href]="whatsappContact" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Poser une question</a>
+      }
+    </aside>
+  </div>
+</section>
+
+<!-- Garanties -->
+<section class="trust" aria-label="Nos engagements">
+  <div class="container trust__inner">
+    <div><i class="bi bi-patch-check"></i><span><strong>Stock à jour</strong> en temps réel</span></div>
+    <div><i class="bi bi-chat-heart"></i><span><strong>Réponse rapide</strong> sur WhatsApp</span></div>
+    <div><i class="bi bi-cash-coin"></i><span><strong>Aucun paiement</strong> en ligne</span></div>
+  </div>
+</section>
+
+<section class="container catalog" id="catalogue">
+  <div class="filters">
+  <!-- Catégories -->
+  @if (context.categories().length > 0) {
+    <nav class="chips" aria-label="Catégories">
+      <a class="chip" [class.is-active]="!query().categoryId" [routerLink]="[]" [queryParams]="categoryParams(null)" queryParamsHandling="merge" fragment="catalogue">
+        Tout <span>{{ store().products_count }}</span>
+      </a>
+      @for (category of context.categories(); track category.id) {
+        <a
+          class="chip"
+          [class.is-active]="query().categoryId === category.id"
+          [routerLink]="[]"
+          [queryParams]="categoryParams(category.id)"
+          queryParamsHandling="merge"
+          fragment="catalogue"
+          [attr.aria-current]="query().categoryId === category.id ? 'true' : null"
+        >
+          {{ category.name }} <span>{{ category.products_count }}</span>
+        </a>
+      }
+    </nav>
+  }
+
+  <!-- Recherche et tri -->
+  <div class="toolbar">
+    <form class="search" role="search" (ngSubmit)="submitSearch()">
+      <i class="bi bi-search" aria-hidden="true"></i>
+      <label class="sr-only" for="catalog-search">Rechercher un produit</label>
+      <input
+        id="catalog-search"
+        type="search"
+        name="q"
+        [(ngModel)]="search"
+        (ngModelChange)="onSearch($event)"
+        placeholder="Rechercher un produit…"
+        autocomplete="off"
+        enterkeyhint="search"
+      />
+      @if (search) {
+        <button type="button" class="search__clear" (click)="clearSearch()" aria-label="Effacer la recherche"><i class="bi bi-x-circle-fill"></i></button>
+      }
+    </form>
+
+    <div class="sort">
+      <label for="catalog-sort"><i class="bi bi-sort-down" aria-hidden="true"></i><span class="sr-only">Trier par</span></label>
+      <select id="catalog-sort" [ngModel]="query().sort" (ngModelChange)="setSort($event)" name="sort">
+        @for (s of sorts; track s.value) {
+          <option [ngValue]="s.value">{{ s.label }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  </div>
+
+  @if (result(); as r) {
+    <div class="summary">
+      <h2>
+        {{ activeCategory()?.name || (query().search ? 'Résultats' : 'Tous nos produits') }}
+        @if (query().search) {
+          <span class="summary__term">pour « {{ query().search }} »</span>
+        }
+      </h2>
+      @if (r.meta.total > 0) {
+        <p>{{ firstIndex() }}–{{ lastIndex() }} sur {{ r.meta.total }} produit{{ r.meta.total > 1 ? 's' : '' }}</p>
+      }
+    </div>
+
+    @if (r.data.length > 0) {
+      <div class="grid">
+        @for (product of r.data; track product.id; let i = $index) {
+          <app-product-card [product]="product" [slug]="store().slug" [currency]="store().currency" [eager]="i < 4" />
+        }
+      </div>
+
+      @if (pages().length > 0) {
+        <nav class="pager" aria-label="Pagination">
+          <a
+            class="pager__nav"
+            [class.is-disabled]="r.meta.current_page === 1"
+            [routerLink]="[]"
+            [queryParams]="pageParams(r.meta.current_page - 1)"
+            queryParamsHandling="merge"
+            fragment="catalogue"
+            [attr.aria-disabled]="r.meta.current_page === 1"
+            [attr.tabindex]="r.meta.current_page === 1 ? -1 : null"
+            rel="prev"
+          >
+            <i class="bi bi-chevron-left"></i><span>Précédent</span>
+          </a>
+          <ol class="pager__pages">
+            @for (item of pages(); track $index) {
+              <li>
+                @if (item === 'gap') {
+                  <span class="pager__gap" aria-hidden="true">…</span>
+                } @else {
+                  <a
+                    class="pager__page"
+                    [class.is-current]="item === r.meta.current_page"
+                    [routerLink]="[]"
+                    [queryParams]="pageParams(item)"
+                    queryParamsHandling="merge"
+                    fragment="catalogue"
+                    [attr.aria-current]="item === r.meta.current_page ? 'page' : null"
+                    [attr.aria-label]="'Page ' + item"
+                  >{{ item }}</a>
+                }
+              </li>
+            }
+          </ol>
+          <span class="pager__mobile">Page {{ r.meta.current_page }} / {{ r.meta.last_page }}</span>
+          <a
+            class="pager__nav"
+            [class.is-disabled]="r.meta.current_page === r.meta.last_page"
+            [routerLink]="[]"
+            [queryParams]="pageParams(r.meta.current_page + 1)"
+            queryParamsHandling="merge"
+            fragment="catalogue"
+            [attr.aria-disabled]="r.meta.current_page === r.meta.last_page"
+            [attr.tabindex]="r.meta.current_page === r.meta.last_page ? -1 : null"
+            rel="next"
+          >
+            <span>Suivant</span><i class="bi bi-chevron-right"></i>
+          </a>
+        </nav>
+      }
+    } @else {
+      <div class="empty">
+        <span class="empty__icon"><i class="bi bi-search"></i></span>
+        <h3>{{ hasFilters() ? 'Aucun produit ne correspond' : 'Aucun produit disponible pour le moment' }}</h3>
+        <p>{{ hasFilters() ? 'Essayez un autre mot ou une autre catégorie.' : 'Revenez bientôt ou écrivez-nous : nous vous dirons ce qui arrive.' }}</p>
+        @if (hasFilters()) {
+          <button type="button" class="btn btn--soft" (click)="resetFilters()">Voir tous les produits</button>
+        } @else if (whatsappContact) {
+          <a class="btn btn--whatsapp" [href]="whatsappContact" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Nous écrire</a>
+        }
+      </div>
+    }
+  } @else {
+    <div class="empty">
+      <span class="empty__icon"><i class="bi bi-wifi-off"></i></span>
+      <h3>Impossible d'afficher les produits</h3>
+      <p>Vérifiez votre connexion puis réessayez.</p>
+      <button type="button" class="btn btn--soft" (click)="reload()">Réessayer</button>
+    </div>
+  }
+</section>

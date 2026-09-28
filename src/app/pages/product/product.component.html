@@ -1,0 +1,115 @@
+@if (product(); as product) {
+  <div class="container page">
+    <nav class="crumbs" aria-label="Fil d'Ariane">
+      <a [routerLink]="['/', store().slug]">Accueil</a>
+      <i class="bi bi-chevron-right" aria-hidden="true"></i>
+      @if (product.category) {
+        <a [routerLink]="['/', store().slug]" [queryParams]="{ cat: product.category.id }" fragment="catalogue">{{ product.category.name }}</a>
+        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+      }
+      <span aria-current="page">{{ product.name }}</span>
+    </nav>
+
+    <div class="layout">
+      <div class="media">
+        @if (product.image_url) {
+          <img [src]="product.image_url" [alt]="product.name" loading="eager" fetchpriority="high" />
+        } @else {
+          <span class="media__placeholder" aria-hidden="true" [style.--tint]="'var(--tint-' + (product.id % 4) + ')'"><i class="bi {{ icon() }}"></i></span>
+        }
+      </div>
+
+      <div class="info">
+        @if (product.category) {
+          <span class="info__category">{{ product.category.name }}</span>
+        }
+        <h1>{{ product.name }}</h1>
+        <span class="pill pill--{{ product.availability }}">
+          {{ product.availability === 'low' ? 'Stock limité — commandez vite' : 'En stock' }}
+        </span>
+
+        <div class="purchase">
+        <div class="price">
+          @if (price(); as value) {
+            <strong>{{ money(value) }}</strong>
+            <span>/ {{ unit()?.name || product.unit }}</span>
+          } @else {
+            <strong class="is-muted">Prix sur demande</strong>
+          }
+        </div>
+
+        @if (product.units.length > 1) {
+          <fieldset class="units">
+            <legend class="label">Vendu par</legend>
+            <div class="units__list">
+              @for (u of product.units; track u.id) {
+                <label class="unit" [class.is-active]="unit()?.id === u.id">
+                  <input type="radio" name="unit" [value]="u.id" [checked]="unit()?.id === u.id" (change)="unitId.set(u.id)" />
+                  <span class="unit__name">{{ u.name }}</span>
+                  <span class="unit__price">{{ u.price ? money(u.price) : 'Sur demande' }}</span>
+                </label>
+              }
+            </div>
+          </fieldset>
+        }
+
+        <div class="buy">
+          <div class="stepper stepper--lg" role="group" aria-label="Quantité">
+            <button type="button" (click)="changeQuantity(-1)" [disabled]="quantity() <= 1" aria-label="Diminuer"><i class="bi bi-dash-lg"></i></button>
+            <output aria-live="polite">{{ quantity() }}</output>
+            <button type="button" (click)="changeQuantity(1)" aria-label="Augmenter"><i class="bi bi-plus-lg"></i></button>
+          </div>
+          <button type="button" class="btn btn--brand btn--lg buy__add" (click)="addToCart()">
+            <i class="bi bi-bag-plus"></i> Ajouter au panier
+          </button>
+        </div>
+
+        </div>
+
+        @if (directOrderLink; as link) {
+          <a class="btn btn--whatsapp btn--lg btn--block" [href]="link" target="_blank" rel="noopener">
+            <i class="bi bi-whatsapp"></i> Commander ce produit sur WhatsApp
+          </a>
+        }
+
+        @if (inCart() > 0) {
+          <button type="button" class="in-cart" (click)="cart.isOpen.set(true)">
+            <i class="bi bi-bag-check-fill"></i> {{ inCart() }} dans votre panier <span>Voir le panier <i class="bi bi-arrow-right"></i></span>
+          </button>
+        }
+
+        <ul class="reassure">
+          <li><i class="bi bi-chat-dots"></i> Confirmation rapide par la boutique sur WhatsApp</li>
+          <li><i class="bi bi-cash-coin"></i> Aucun paiement en ligne : vous réglez à la boutique ou à la livraison</li>
+        </ul>
+
+        @if (product.description) {
+          <section class="description">
+            <h2>Description</h2>
+            <p>{{ product.description }}</p>
+          </section>
+        }
+      </div>
+    </div>
+
+    @if (related().length > 0) {
+      <section class="related" aria-labelledby="related-title">
+        <div class="related__head">
+          <h2 id="related-title">Vous aimerez aussi</h2>
+          <a [routerLink]="['/', store().slug]" [queryParams]="product.category ? { cat: product.category.id } : {}" fragment="catalogue">
+            Tout voir <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+        <div class="related__grid">
+          @for (item of related(); track item.id) {
+            <app-product-card [product]="item" [slug]="store().slug" [currency]="store().currency" />
+          }
+        </div>
+      </section>
+    }
+
+    <a class="back" [routerLink]="['/', store().slug]" fragment="catalogue"><i class="bi bi-arrow-left"></i> Continuer mes achats</a>
+  </div>
+} @else {
+  <app-not-found kind="product" />
+}
