@@ -61,6 +61,7 @@
               "src/styles.scss"
             ],
             "scripts": [],
+            "allowedCommonJsDependencies": ["compression"],
             "server": "src/main.server.ts",
             "prerender": false,
             "ssr": {

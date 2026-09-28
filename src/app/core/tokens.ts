@@ -9,3 +9,9 @@ export const SERVER_STOREFRONT_KEY = new InjectionToken<string>('SERVER_STOREFRO
 
 /** Réponse Express en cours (SSR) : permet de renvoyer un vrai 404 aux moteurs de recherche. */
 export const SERVER_RESPONSE = new InjectionToken<Response>('SERVER_RESPONSE');
+
+/**
+ * Adresse de l'API utilisée par le serveur SSR uniquement (ex. réseau Docker interne) :
+ * évite l'aller-retour par Internet. Le navigateur utilise toujours SERVER_API_URL.
+ */
+export const SERVER_API_INTERNAL_URL = new InjectionToken<string>('SERVER_API_INTERNAL_URL');

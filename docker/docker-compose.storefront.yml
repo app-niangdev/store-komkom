@@ -1,0 +1,26 @@
+# Service à ajouter dans /opt/komkom/docker-compose.yml (à côté de backend et frontend).
+services:
+  storefront:
+    image: ghcr.io/app-niangdev/storefront-komkom:latest
+    container_name: komkom-storefront
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      PORT: 4300
+      # Adresse publique : transmise au navigateur des visiteurs
+      API_URL: https://backendkomkom.niangdev.com/api
+      # Adresse interne (réseau Docker, service "backend" sur le port 80) : utilisée par le rendu serveur
+      API_INTERNAL_URL: http://backend/api
+      # Même valeur que STOREFRONT_SSR_KEY dans le .env du backend
+      STOREFRONT_SSR_KEY: ${STOREFRONT_SSR_KEY}
+      SSR_CACHE_SECONDS: 30
+    ports:
+      # Exposé uniquement en local : Nginx de l'hôte fait le proxy HTTPS
+      - "127.0.0.1:8083:4300"
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
