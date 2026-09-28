@@ -37,12 +37,22 @@ export class ProductCardComponent {
     return formatMoney(value, this.currency());
   }
 
+  /** Le visuel touché s'agrandit jusqu'à celui de la fiche produit (transition de page). */
+  morph(event: MouseEvent): void {
+    const media = (event.currentTarget as HTMLElement).closest('.card')?.querySelector<HTMLElement>('.card__media');
+    if (media) {
+      media.style.setProperty('view-transition-name', `product-${this.product().id}`);
+    }
+  }
+
   add(): void {
+    this.ui.tap();
     this.cart.add(this.product(), this.baseUnit());
-    this.ui.notify(`${this.product().name} ajouté au panier`, this.product().image_url);
+    this.ui.notify(this.product().name, this.product().image_url);
   }
 
   change(delta: number): void {
+    this.ui.tap();
     const key = `${this.product().id}:${this.baseUnit()?.id ?? 'base'}`;
     this.cart.setQuantity(key, this.inCart() + delta);
   }

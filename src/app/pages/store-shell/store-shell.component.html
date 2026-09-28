@@ -1,6 +1,6 @@
 @if (store(); as store) {
   <div class="progress" [class.is-active]="navigating()" aria-hidden="true"></div>
-  <header class="topbar" [class.is-scrolled]="scrolled()">
+  <header class="topbar" [class.is-scrolled]="scrolled()" [class.is-over]="ui.overCover() && !pastCover()">
     <div class="container topbar__inner">
       <a class="brand" [routerLink]="['/', store.slug]" [attr.aria-label]="'Accueil ' + store.name">
         <app-store-logo [url]="store.logo_url" [name]="store.name" />
@@ -13,12 +13,22 @@
       </a>
 
       <nav class="topbar__actions" aria-label="Actions">
+        <button type="button" class="round-btn" (click)="ui.share(store.name)" title="Partager la boutique" aria-label="Partager la boutique">
+          <i class="bi bi-box-arrow-up"></i>
+        </button>
         @if (whatsappContact) {
-          <a class="icon-btn topbar__wa" [href]="whatsappContact" target="_blank" rel="noopener" title="Écrire sur WhatsApp" aria-label="Écrire à la boutique sur WhatsApp">
+          <a class="round-btn round-btn--wa is-desktop" [href]="whatsappContact" target="_blank" rel="noopener" title="Écrire sur WhatsApp" aria-label="Écrire à la boutique sur WhatsApp">
             <i class="bi bi-whatsapp"></i>
           </a>
         }
-        <button type="button" class="cart-btn" [class.is-bump]="bump()" (click)="cart.isOpen.set(true)" [attr.aria-label]="'Ouvrir le panier, ' + cart.count() + ' article(s)'">
+        <button
+          type="button"
+          class="cart-btn"
+          [class.is-mobile-hidden]="!ui.hideCartBar()"
+          [class.is-bump]="bump()"
+          (click)="cart.isOpen.set(true)"
+          [attr.aria-label]="'Ouvrir le panier, ' + cart.count() + ' article(s)'"
+        >
           <i class="bi bi-bag"></i>
           <span class="cart-btn__label">Panier</span>
           @if (cart.count() > 0) {
@@ -36,6 +46,7 @@
   <!-- Nous rendre visite -->
   <section class="container visit" aria-labelledby="visit-title">
     <div class="visit__card">
+      <span class="visit__icon" aria-hidden="true"><i class="bi bi-chat-heart-fill"></i></span>
       <div class="visit__text">
         <h2 id="visit-title">Une question avant de commander ?</h2>
         <p>{{ store.name }} vous répond directement sur WhatsApp ou par téléphone{{ store.address ? ', et vous accueille à ' + store.address : '' }}.</p>
@@ -96,16 +107,49 @@
     </div>
   </footer>
 
-  <!-- Barre panier (mobile) -->
-  @if (cart.count() > 0 && !cart.isOpen() && !ui.hideCartBar()) {
-    <button type="button" class="cart-bar" (click)="cart.isOpen.set(true)">
-      <span class="cart-bar__count">{{ cart.count() }}</span>
-      <span class="cart-bar__label">Voir mon panier</span>
-      <strong>{{ money(cart.total()) }}</strong>
+  <!-- Dock mobile : navigation à portée de pouce, le panier grandit quand il se remplit -->
+  <nav class="dock" [class.is-hidden]="ui.hideCartBar() || cart.isOpen()" aria-label="Navigation rapide">
+    <a class="dock__item" [routerLink]="['/', store.slug]" [class.is-active]="ui.overCover()" aria-label="Accueil de la boutique">
+      <i class="bi" [class.bi-shop]="!ui.overCover()" [class.bi-shop-window]="ui.overCover()"></i>
+      <span>Boutique</span>
+    </a>
+    <button type="button" class="dock__item" (click)="openSearch()" aria-label="Rechercher un produit">
+      <i class="bi bi-search"></i>
+      <span>Chercher</span>
     </button>
-  }
+    @if (whatsappContact) {
+      <a class="dock__item dock__item--wa" [href]="whatsappContact" target="_blank" rel="noopener" aria-label="Écrire à la boutique sur WhatsApp">
+        <i class="bi bi-whatsapp"></i>
+        <span>WhatsApp</span>
+      </a>
+    }
+    <button
+      type="button"
+      class="dock__cart"
+      [class.has-items]="cart.count() > 0"
+      [class.is-bump]="bump()"
+      (click)="cart.isOpen.set(true)"
+      [attr.aria-label]="'Ouvrir le panier, ' + cart.count() + ' article(s)'"
+    >
+      <span class="dock__bag">
+        <i class="bi" [class.bi-bag]="cart.count() === 0" [class.bi-bag-fill]="cart.count() > 0"></i>
+        @if (cart.count() > 0) {
+          <b>{{ cart.count() }}</b>
+        }
+      </span>
+      @if (cart.count() > 0) {
+        <span class="dock__cart-text">
+          <small>Mon panier</small>
+          <strong>{{ money(cart.total()) }}</strong>
+        </span>
+        <i class="bi bi-chevron-right dock__go"></i>
+      } @else {
+        <span class="dock__cart-label">Panier</span>
+      }
+    </button>
+  </nav>
 
-  <!-- WhatsApp flottant (quand le panier est vide) -->
+  <!-- WhatsApp flottant (ordinateur, quand le panier est vide) -->
   @if (cart.count() === 0 && whatsappContact) {
     <a class="wa-fab" [href]="whatsappContact" target="_blank" rel="noopener" aria-label="Écrire à la boutique sur WhatsApp">
       <i class="bi bi-whatsapp"></i>
@@ -114,14 +158,21 @@
 
   <!-- Confirmation d'ajout -->
   @if (ui.toast(); as toast) {
-    <div class="toast" role="status" aria-live="polite">
+    <div class="toast" [class.is-raised]="ui.hideCartBar()" role="status" aria-live="polite">
       @if (toast.image) {
         <img [src]="toast.image" alt="" />
       } @else {
-        <span class="toast__icon"><i class="bi bi-bag-check-fill"></i></span>
+        <span class="toast__icon"><i class="bi" [class.bi-bag-check-fill]="toast.action" [class.bi-link-45deg]="!toast.action"></i></span>
       }
-      <span class="toast__text">{{ toast.text }}</span>
-      <button type="button" (click)="openCartFromToast()">Voir le panier</button>
+      <span class="toast__text">
+        @if (toast.action) {
+          <small><i class="bi bi-check-circle-fill"></i> Ajouté au panier</small>
+        }
+        <span>{{ toast.text }}</span>
+      </span>
+      @if (toast.action) {
+        <button type="button" (click)="openCartFromToast()">Voir</button>
+      }
     </div>
   }
 

@@ -5,6 +5,8 @@
   #panel
   class="drawer"
   [class.is-open]="cart.isOpen()"
+  [class.is-dragging]="dragY() !== null"
+  [style.--drag]="(dragY() ?? 0) + 'px'"
   role="dialog"
   aria-modal="true"
   aria-labelledby="cart-title"
@@ -12,7 +14,8 @@
   [attr.aria-hidden]="!cart.isOpen()"
   [attr.inert]="cart.isOpen() ? null : ''"
 >
-  <header class="drawer__head">
+  <header class="drawer__head" (pointerdown)="dragStart($event)">
+    <span class="drawer__handle" aria-hidden="true"></span>
     <div>
       <h2 id="cart-title">Mon panier</h2>
       <p>{{ cart.count() }} article{{ cart.count() > 1 ? 's' : '' }}</p>
@@ -92,6 +95,7 @@
       @if (orderLink; as link) {
         <a class="btn btn--whatsapp btn--lg btn--block" [href]="link" target="_blank" rel="noopener" (click)="onOrder()">
           <i class="bi bi-whatsapp"></i> Commander sur WhatsApp
+          <i class="bi bi-arrow-right checkout__arrow"></i>
         </a>
       } @else {
         <p class="checkout__hint">Cette boutique ne reçoit pas encore de commandes WhatsApp.</p>

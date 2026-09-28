@@ -42,6 +42,8 @@ export class StoreShellComponent implements OnInit {
   /** Effet « rebond » du bouton panier après un ajout. */
   protected readonly bump = signal(false);
   protected readonly scrolled = signal(false);
+  /** L'en-tête a quitté la couverture de la boutique : il redevient opaque. */
+  protected readonly pastCover = signal(false);
   /** Navigation en cours (données chargées avant affichage) : barre de progression. */
   protected readonly navigating = signal(false);
 
@@ -79,7 +81,11 @@ export class StoreShellComponent implements OnInit {
       )
       .subscribe((e) => this.navigating.set(e instanceof NavigationStart));
     if (this.isBrowser) {
-      const onScroll = () => this.scrolled.set(window.scrollY > 8);
+      const onScroll = () => {
+        this.scrolled.set(window.scrollY > 8);
+        this.pastCover.set(window.scrollY > 110);
+      };
+      onScroll();
       window.addEventListener('scroll', onScroll, { passive: true });
       this.destroyRef.onDestroy(() => window.removeEventListener('scroll', onScroll));
     }
@@ -88,6 +94,26 @@ export class StoreShellComponent implements OnInit {
   openCartFromToast(): void {
     this.ui.dismiss();
     this.cart.isOpen.set(true);
+  }
+
+  /** Dock « Chercher » : amène au catalogue et ouvre le clavier sur la recherche. */
+  openSearch(): void {
+    const slug = this.store()?.slug;
+    if (!slug) {
+      return;
+    }
+    const focus = () => {
+      const input = this.document.getElementById('catalog-search') as HTMLInputElement | null;
+      if (!input) {
+        return false;
+      }
+      this.document.getElementById('catalogue')?.scrollIntoView({ behavior: 'smooth' });
+      input.focus({ preventScroll: true });
+      return true;
+    };
+    if (!focus()) {
+      this.router.navigate(['/', slug], { fragment: 'catalogue' }).then(() => setTimeout(focus, 350));
+    }
   }
 
   private setIcon(rel: string, href: string): void {

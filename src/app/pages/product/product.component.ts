@@ -91,6 +91,7 @@ export class ProductComponent implements OnInit {
   }
 
   changeQuantity(delta: number): void {
+    this.ui.tap();
     this.quantity.update((q) => Math.min(999, Math.max(1, q + delta)));
   }
 
@@ -100,8 +101,9 @@ export class ProductComponent implements OnInit {
       return;
     }
     const quantity = this.quantity();
+    this.ui.tap();
     this.cart.add(product, this.unit(), quantity);
-    this.ui.notify(`${quantity > 1 ? quantity + ' × ' : ''}${product.name} ajouté au panier`, product.image_url);
+    this.ui.notify(`${quantity > 1 ? quantity + ' × ' : ''}${product.name}`, product.image_url);
     this.quantity.set(1);
   }
 

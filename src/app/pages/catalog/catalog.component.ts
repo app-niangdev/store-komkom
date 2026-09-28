@@ -9,6 +9,8 @@ import { readQuery } from '../../core/resolvers';
 import { StoreContextService } from '../../core/store-context.service';
 import { SeoService } from '../../core/seo.service';
 import { formatPhone } from '../../core/format';
+import { UiService } from '../../core/ui.service';
+import { productIcon } from '../../core/category-icon';
 import { ProductCardComponent } from '../../shared/product-card/product-card.component';
 import { StoreLogoComponent } from '../../shared/store-logo/store-logo.component';
 
@@ -29,6 +31,7 @@ export class CatalogComponent implements OnInit {
   private readonly seo = inject(SeoService);
   private readonly document = inject(DOCUMENT);
   protected readonly context = inject(StoreContextService);
+  protected readonly ui = inject(UiService);
 
   protected readonly result = toSignal(this.route.data.pipe(map((d) => d['page'] as Page<Product> | null)), {
     initialValue: this.route.snapshot.data['page'] as Page<Product> | null
@@ -53,6 +56,8 @@ export class CatalogComponent implements OnInit {
     const id = this.query().categoryId;
     return id ? this.context.categories().find((c) => c.id === id) ?? null : null;
   });
+
+  protected readonly sortLabel = computed(() => (this.query().sort === 'name' ? 'Trier' : this.sorts.find((s) => s.value === this.query().sort)!.label));
 
   protected readonly hasFilters = computed(() => !!this.query().search || !!this.query().categoryId);
 
@@ -82,6 +87,22 @@ export class CatalogComponent implements OnInit {
   get whatsappContact(): string | null {
     const s = this.store();
     return s.whatsapp ? `https://wa.me/${s.whatsapp}?text=${encodeURIComponent(`Bonjour ${s.name}, `)}` : null;
+  }
+
+  get mapsUrl(): string | null {
+    const address = this.store().address;
+    return address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : null;
+  }
+
+  categoryIcon(name: string): string {
+    const icon = productIcon('', name);
+    return icon === 'bi-box-seam' ? 'bi-tag' : icon;
+  }
+
+  constructor() {
+    // L'en-tête se pose sur la couverture tant qu'elle est visible
+    this.ui.overCover.set(true);
+    this.destroyRef.onDestroy(() => this.ui.overCover.set(false));
   }
 
   ngOnInit(): void {

@@ -1,82 +1,63 @@
-<!-- Présentation de la boutique -->
-<section class="hero">
-  <div class="hero__pattern" aria-hidden="true"></div>
-  <div class="container hero__inner">
-    <div class="hero__main">
-      <div class="hero__identity">
-        <app-store-logo class="hero__logo" [url]="store().logo_url" [name]="store().name" />
-        <div class="hero__titles">
+<!-- Présentation de la boutique : couverture à ses couleurs et carte d'identité -->
+<section class="profile">
+  <div class="cover" aria-hidden="true">
+    <span class="cover__glow cover__glow--a"></span>
+    <span class="cover__glow cover__glow--b"></span>
+    <span class="cover__pattern"></span>
+  </div>
+
+  <div class="container">
+    <div class="profile__card">
+      <div class="profile__head">
+        <app-store-logo class="profile__logo" [url]="store().logo_url" [name]="store().name" />
+        <div class="profile__titles">
           @if (store().company && store().company !== store().name) {
-            <p class="hero__eyebrow">{{ store().company }}</p>
+            <p class="profile__eyebrow">{{ store().company }}</p>
           }
           <h1>{{ store().name }}</h1>
+          <ul class="profile__facts">
+            <li><span class="dot-live" aria-hidden="true"></span> {{ store().products_count }} produit{{ store().products_count > 1 ? 's' : '' }} en stock</li>
+            @if (store().address) {
+              <li><i class="bi bi-geo-alt-fill"></i> {{ store().address }}</li>
+            }
+          </ul>
         </div>
       </div>
-      <p class="hero__slogan">{{ store().slogan || 'Découvrez nos produits disponibles et commandez en quelques secondes sur WhatsApp.' }}</p>
 
-      <ul class="hero__facts">
-        <li><i class="bi bi-box-seam"></i> {{ store().products_count }} produit{{ store().products_count > 1 ? 's' : '' }} en stock</li>
-        @if (store().address) {
-          <li><i class="bi bi-geo-alt"></i> {{ store().address }}</li>
+      <p class="profile__slogan">{{ store().slogan || 'Découvrez nos produits disponibles et commandez en quelques secondes sur WhatsApp.' }}</p>
+
+      <nav class="quick" aria-label="Contacter la boutique">
+        @if (whatsappContact) {
+          <a class="quick__item quick__item--wa" [href]="whatsappContact" target="_blank" rel="noopener">
+            <span><i class="bi bi-whatsapp"></i></span>WhatsApp
+          </a>
         }
-      </ul>
-
-      <div class="hero__cta">
-        <a class="btn btn--hero" [routerLink]="[]" queryParamsHandling="preserve" fragment="catalogue"><i class="bi bi-grid-3x3-gap"></i> Voir les produits</a>
         @if (store().phones.length) {
-          <a class="btn btn--hero-ghost" [href]="'tel:' + store().phones[0]"><i class="bi bi-telephone"></i> Appeler</a>
+          <a class="quick__item" [href]="'tel:' + store().phones[0]">
+            <span><i class="bi bi-telephone-fill"></i></span>Appeler
+          </a>
         }
-      </div>
-    </div>
+        @if (mapsUrl) {
+          <a class="quick__item" [href]="mapsUrl" target="_blank" rel="noopener">
+            <span><i class="bi bi-sign-turn-right-fill"></i></span>Itinéraire
+          </a>
+        }
+        <button type="button" class="quick__item" (click)="ui.share(store().name)">
+          <span><i class="bi bi-share-fill"></i></span>Partager
+        </button>
+      </nav>
 
-    <!-- Carte « commander » (bureau) -->
-    <aside class="order-card" aria-label="Comment commander">
-      <h2>Commander, c'est simple</h2>
-      <ol>
-        <li><span><i class="bi bi-search"></i></span><div><strong>Choisissez</strong><small>Parcourez les produits en stock</small></div></li>
-        <li><span><i class="bi bi-bag-plus"></i></span><div><strong>Ajoutez au panier</strong><small>Ajustez les quantités</small></div></li>
-        <li><span class="is-wa"><i class="bi bi-whatsapp"></i></span><div><strong>Envoyez sur WhatsApp</strong><small>La boutique confirme prix et livraison</small></div></li>
+      <ol class="steps" aria-label="Comment commander">
+        <li><span><i class="bi bi-hand-index-thumb"></i></span><div><strong>Choisissez</strong><small>vos produits</small></div></li>
+        <li><span><i class="bi bi-bag-plus"></i></span><div><strong>Ajoutez</strong><small>au panier</small></div></li>
+        <li><span class="is-wa"><i class="bi bi-whatsapp"></i></span><div><strong>Envoyez</strong><small>sur WhatsApp</small></div></li>
       </ol>
-      @if (whatsappContact) {
-        <a class="btn btn--whatsapp btn--block" [href]="whatsappContact" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Poser une question</a>
-      }
-    </aside>
-  </div>
-</section>
-
-<!-- Garanties -->
-<section class="trust" aria-label="Nos engagements">
-  <div class="container trust__inner">
-    <div><i class="bi bi-patch-check"></i><span><strong>Stock à jour</strong> en temps réel</span></div>
-    <div><i class="bi bi-chat-heart"></i><span><strong>Réponse rapide</strong> sur WhatsApp</span></div>
-    <div><i class="bi bi-cash-coin"></i><span><strong>Aucun paiement</strong> en ligne</span></div>
+    </div>
   </div>
 </section>
 
 <section class="container catalog" id="catalogue">
   <div class="filters">
-  <!-- Catégories -->
-  @if (context.categories().length > 0) {
-    <nav class="chips" aria-label="Catégories">
-      <a class="chip" [class.is-active]="!query().categoryId" [routerLink]="[]" [queryParams]="categoryParams(null)" queryParamsHandling="merge" fragment="catalogue">
-        Tout <span>{{ store().products_count }}</span>
-      </a>
-      @for (category of context.categories(); track category.id) {
-        <a
-          class="chip"
-          [class.is-active]="query().categoryId === category.id"
-          [routerLink]="[]"
-          [queryParams]="categoryParams(category.id)"
-          queryParamsHandling="merge"
-          fragment="catalogue"
-          [attr.aria-current]="query().categoryId === category.id ? 'true' : null"
-        >
-          {{ category.name }} <span>{{ category.products_count }}</span>
-        </a>
-      }
-    </nav>
-  }
-
   <!-- Recherche et tri -->
   <div class="toolbar">
     <form class="search" role="search" (ngSubmit)="submitSearch()">
@@ -97,8 +78,8 @@
       }
     </form>
 
-    <div class="sort">
-      <label for="catalog-sort"><i class="bi bi-sort-down" aria-hidden="true"></i><span class="sr-only">Trier par</span></label>
+    <div class="sort" [class.is-set]="query().sort !== 'name'">
+      <label for="catalog-sort"><i class="bi bi-sliders2" aria-hidden="true"></i><span class="sort__text">{{ sortLabel() }}</span><span class="sr-only">Trier par</span></label>
       <select id="catalog-sort" [ngModel]="query().sort" (ngModelChange)="setSort($event)" name="sort">
         @for (s of sorts; track s.value) {
           <option [ngValue]="s.value">{{ s.label }}</option>
@@ -107,6 +88,27 @@
     </div>
   </div>
 
+  <!-- Catégories -->
+  @if (context.categories().length > 0) {
+    <nav class="chips" aria-label="Catégories">
+      <a class="chip" [class.is-active]="!query().categoryId" [routerLink]="[]" [queryParams]="categoryParams(null)" queryParamsHandling="merge" fragment="catalogue">
+        <i class="bi bi-grid-fill"></i> Tout <span>{{ store().products_count }}</span>
+      </a>
+      @for (category of context.categories(); track category.id) {
+        <a
+          class="chip"
+          [class.is-active]="query().categoryId === category.id"
+          [routerLink]="[]"
+          [queryParams]="categoryParams(category.id)"
+          queryParamsHandling="merge"
+          fragment="catalogue"
+          [attr.aria-current]="query().categoryId === category.id ? 'true' : null"
+        >
+          <i class="bi {{ categoryIcon(category.name) }}"></i> {{ category.name }} <span>{{ category.products_count }}</span>
+        </a>
+      }
+    </nav>
+  }
   </div>
 
   @if (result(); as r) {

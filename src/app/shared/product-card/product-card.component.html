@@ -1,46 +1,40 @@
 <article class="card" [class.in-cart]="inCart() > 0">
-  <a class="card__media" [routerLink]="link()" [attr.aria-label]="product().name" [style.--tint]="tint()">
-    @if (product().image_url) {
-      <img [src]="product().image_url" [alt]="product().name" [attr.loading]="eager() ? 'eager' : 'lazy'" decoding="async" />
-    } @else {
-      <span class="card__placeholder" aria-hidden="true"><i class="bi {{ icon() }}"></i></span>
-    }
-    @if (product().availability === 'low') {
-      <span class="card__flag"><i class="bi bi-lightning-charge-fill"></i> Stock limité</span>
-    }
+  <div class="card__visual">
+    <a class="card__media" [routerLink]="link()" [attr.aria-label]="product().name" [style.--tint]="tint()" (click)="morph($event)">
+      @if (product().image_url) {
+        <img [src]="product().image_url" [alt]="product().name" [attr.loading]="eager() ? 'eager' : 'lazy'" decoding="async" />
+      } @else {
+        <span class="card__placeholder" aria-hidden="true"><i class="bi {{ icon() }}"></i></span>
+      }
+      @if (product().availability === 'low') {
+        <span class="card__flag"><i class="bi bi-lightning-charge-fill"></i> Stock limité</span>
+      }
+    </a>
+
+    <!-- Ajout rapide : le bouton « + » devient un compteur une fois le produit au panier -->
     @if (inCart() > 0) {
-      <span class="card__incart" aria-hidden="true"><i class="bi bi-bag-check-fill"></i> {{ inCart() }}</span>
+      <div class="qty" role="group" [attr.aria-label]="'Quantité de ' + product().name + ' dans le panier'">
+        <button type="button" (click)="change(-1)" [attr.aria-label]="inCart() === 1 ? 'Retirer du panier' : 'Diminuer'">
+          <i class="bi" [class.bi-dash-lg]="inCart() > 1" [class.bi-trash3]="inCart() === 1"></i>
+        </button>
+        <output>{{ inCart() }}</output>
+        <button type="button" (click)="change(1)" aria-label="Augmenter"><i class="bi bi-plus-lg"></i></button>
+      </div>
+    } @else {
+      <button type="button" class="add" (click)="add()" [attr.aria-label]="'Ajouter ' + product().name + ' au panier'">
+        <i class="bi bi-plus-lg"></i><span>Ajouter</span>
+      </button>
     }
-  </a>
+  </div>
 
   <div class="card__body">
-    @if (product().category) {
-      <span class="card__category">{{ product().category!.name }}</span>
-    }
-    <h3 class="card__name"><a [routerLink]="link()">{{ product().name }}</a></h3>
-
-    <div class="card__foot">
-      <div class="card__price">
-        @if (product().price) {
-          <strong>{{ money(product().price!) }}</strong>
-          <small>{{ baseUnit()?.name || product().unit }}</small>
-        } @else {
-          <strong class="is-muted">Prix sur demande</strong>
-        }
-      </div>
-
-      @if (inCart() > 0) {
-        <div class="qty" role="group" [attr.aria-label]="'Quantité de ' + product().name + ' dans le panier'">
-          <button type="button" (click)="change(-1)" [attr.aria-label]="inCart() === 1 ? 'Retirer du panier' : 'Diminuer'">
-            <i class="bi" [class.bi-dash]="inCart() > 1" [class.bi-trash3]="inCart() === 1"></i>
-          </button>
-          <output>{{ inCart() }}</output>
-          <button type="button" (click)="change(1)" aria-label="Augmenter"><i class="bi bi-plus"></i></button>
-        </div>
+    <h3 class="card__name"><a [routerLink]="link()" (click)="morph($event)">{{ product().name }}</a></h3>
+    <div class="card__price">
+      @if (product().price) {
+        <strong>{{ money(product().price!) }}</strong>
+        <small>/ {{ baseUnit()?.name || product().unit }}</small>
       } @else {
-        <button type="button" class="add" (click)="add()" [attr.aria-label]="'Ajouter ' + product().name + ' au panier'">
-          <i class="bi bi-plus-lg"></i><span>Ajouter</span>
-        </button>
+        <strong class="is-muted">Prix sur demande</strong>
       }
     </div>
   </div>

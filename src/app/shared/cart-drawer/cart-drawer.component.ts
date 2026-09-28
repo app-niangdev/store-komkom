@@ -29,6 +29,8 @@ export class CartDrawerComponent {
   protected name = '';
   protected note = '';
   protected readonly sent = signal(false);
+  /** Glissement vers le bas en cours (mobile) : décalage du panneau en pixels. */
+  protected readonly dragY = signal<number | null>(null);
 
   constructor() {
     if (this.isBrowser) {
@@ -59,6 +61,27 @@ export class CartDrawerComponent {
 
   close(): void {
     this.cart.isOpen.set(false);
+  }
+
+  /** Mobile : faire glisser l'en-tête vers le bas ferme le panier, comme une feuille native. */
+  dragStart(event: PointerEvent): void {
+    if (!this.isBrowser || event.pointerType === 'mouse' || (event.target as HTMLElement).closest('button')) {
+      return;
+    }
+    const startY = event.clientY;
+    const move = (e: PointerEvent) => this.dragY.set(Math.max(0, e.clientY - startY));
+    const end = () => {
+      if ((this.dragY() ?? 0) > 110) {
+        this.close();
+      }
+      this.dragY.set(null);
+      this.document.removeEventListener('pointermove', move);
+      this.document.removeEventListener('pointerup', end);
+      this.document.removeEventListener('pointercancel', end);
+    };
+    this.document.addEventListener('pointermove', move);
+    this.document.addEventListener('pointerup', end);
+    this.document.addEventListener('pointercancel', end);
   }
 
   get orderLink(): string | null {

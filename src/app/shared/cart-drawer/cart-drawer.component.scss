@@ -30,7 +30,12 @@
   }
 }
 
+.drawer__handle {
+  display: none;
+}
+
 .drawer__head {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -80,9 +85,17 @@
   display: flex;
   gap: 0.9rem;
   padding: 0.9rem 0;
+  animation: item-in 0.35s var(--ease) both;
 
   & + & {
     border-top: 1px solid var(--line);
+  }
+}
+
+@keyframes item-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
   }
 }
 
@@ -93,8 +106,9 @@
   height: 72px;
   flex-shrink: 0;
   overflow: hidden;
-  border-radius: 14px;
-  background: var(--brand-softer);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px var(--line);
   text-decoration: none;
 
   img {
@@ -196,6 +210,23 @@
   color: var(--warning);
 }
 
+.checkout .btn--whatsapp {
+  position: relative;
+  min-height: 56px;
+  border-radius: 18px;
+  font-size: 1.02rem;
+}
+
+.checkout__arrow {
+  position: absolute;
+  right: 1.2rem;
+  transition: transform 0.2s var(--ease);
+}
+
+.checkout .btn--whatsapp:hover .checkout__arrow {
+  transform: translateX(3px);
+}
+
 .checkout__legal {
   margin: 0;
   text-align: center;
@@ -249,13 +280,54 @@
 }
 
 @media (max-width: 575.98px) {
+  // Feuille qui monte du bas, à faire glisser pour fermer
   .drawer {
     top: auto;
     width: 100%;
-    max-height: 92vh;
-    max-height: 92dvh;
-    border-radius: 24px 24px 0 0;
+    max-height: 90vh;
+    max-height: 90dvh;
+    border-radius: 28px 28px 0 0;
     transform: translateY(105%);
+    transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1), visibility 0s linear 0.45s;
+
+    &.is-open {
+      transform: translateY(var(--drag, 0px));
+      transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    &.is-dragging {
+      transition: none;
+    }
+  }
+
+  .drawer__handle {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    display: block;
+    width: 40px;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--line-strong);
+    transform: translateX(-50%);
+  }
+
+  .drawer__head {
+    padding: 1.4rem 1.1rem 0.9rem;
+    touch-action: none;
+    cursor: grab;
+  }
+
+  .items {
+    padding: 0.25rem 1.1rem;
+  }
+
+  .fields {
+    margin: 0 1.1rem 1.1rem;
+  }
+
+  .checkout {
+    padding: 0.85rem 1.1rem calc(0.9rem + env(safe-area-inset-bottom));
   }
 }
 
